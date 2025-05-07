@@ -21,7 +21,12 @@ def telegram_webhook():
 def index():
     return '✅ Webhook активний!'
 
-# Запуск застосунку
+# Обробка будь-якого текстового повідомлення
+@bot.message_handler(func=lambda message: True)
+def echo_all(message):
+    bot.reply_to(message, "Привіт! Я працюю через Webhook 😊")
+
+# Коли запускається застосунок, встановлюємо webhook
 if __name__ == '__main__':
     bot.remove_webhook()
     bot.set_webhook(url=f'https://yoddabot.onrender.com/{TOKEN}')
