@@ -1,4 +1,5 @@
 from main import bot, TOKEN
+import main
 from flask import Flask, request
 import telebot
 import os
