@@ -29,4 +29,4 @@ def echo_all(message):
 if __name__ == '__main__':
     bot.remove_webhook()
     bot.set_webhook(url=f'https://yoddabot.onrender.com/{TOKEN}')
-    app.run(host='0.0.0.0', port=8080)
+    # app.run(host='0.0.0.0', port=8080)
