@@ -241,4 +241,5 @@ def morning_greeting():
 keep_alive()
 schedule.every().day.at("10:00").do(morning_greeting)
 threading.Thread(target=lambda: [schedule.run_pending() or time.sleep(60)]).start()
-bot.polling()
+# bot.polling()
+
