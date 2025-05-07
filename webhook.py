@@ -1,10 +1,9 @@
+from main import bot, TOKEN
 from flask import Flask, request
 import telebot
 import os
 
 # Отримуємо токен з середовища
-TOKEN = os.getenv('TOKEN')
-bot = telebot.TeleBot(TOKEN)
 
 app = Flask(__name__)
 
