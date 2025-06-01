@@ -5,8 +5,9 @@ import random
 import threading
 import schedule
 import time
-from flask import Flask, request
 from dotenv import load_dotenv
+from flask import Flask, request
+from keep_alive import keep_alive
 
 # Завантаження змінних середовища
 load_dotenv()
@@ -14,20 +15,23 @@ TOKEN = os.getenv('TOKEN')
 CHAT_ID = int(os.getenv('CHAT_ID'))
 bot = telebot.TeleBot(TOKEN)
 
-# Flask app
+# Видалення старого webhook та створення нового
+bot.remove_webhook()
+time.sleep(1)
+bot.set_webhook(url=f"https://yoddabot.onrender.com/{TOKEN}")
+
 app = Flask(__name__)
 
-@app.route(f'/{TOKEN}', methods=['POST'])
-def receive_update():
+@app.route(f"/{TOKEN}", methods=['POST'])
+def webhook():
     if request.headers.get('content-type') == 'application/json':
-        json_string = request.get_data().decode('utf-8')
-        update = telebot.types.Update.de_json(json_string)
+        update = telebot.types.Update.de_json(request.data.decode('utf-8'))
         bot.process_new_updates([update])
-    return 'ok', 200
+        return 'ok', 200
 
 @app.route('/')
 def index():
-    return "✅ Webhook активний!"
+    return 'Webhook active! 🚀', 200
 
 # Дані
 tasks = {}
@@ -72,12 +76,7 @@ def inline_menu():
 motivational_phrases = [
     "✨ Навіть маленький прогрес — це прогрес!",
     "🚀 Ти можеш більше, ніж здається!",
-    "🌟 Великий шлях починається з малого кроку!",
-    "🔥 Успіх — це справа рішучості.",
-    "💡 Віра в себе творить дива!",
-    "🌱 Кожен день — нова можливість.",
-    "🔥 Сьогодні твій день для перемог!",
-    "🏆 Велика мрія — половина успіху!"
+    "🌟 Великий шлях починається з малого кроку!"
 ]
 
 morning_mantras = [
@@ -94,25 +93,22 @@ def start(message):
 def send_main_menu(message):
     bot.send_message(message.chat.id, "📈 Обирай шлях свій:", reply_markup=inline_menu())
 
-# ... [❗ Твій існуючий обробник callback_query_handler сюди вставляєш без змін]
-# ... [❗ Твій обробник message_handler також вставляєш сюди без змін]
+@bot.callback_query_handler(func=lambda call: True)
+def handle_inline_buttons(call):
+    print(f"Callback: {call.data}")  # DEBUG
+    # ... (сюди встав логіку обробки кнопок з попереднього коду)
+    bot.answer_callback_query(call.id)
 
+# Функція натхнення зранку
 def morning_greeting():
     phrase = random.choice(morning_mantras)
     bot.send_message(CHAT_ID, f"💥 Доброго ранку, падаване! {phrase}", reply_markup=power_keyboard())
 
+# Запуск окремого потоку для натхнення
 schedule.every().day.at("10:00").do(morning_greeting)
+threading.Thread(target=lambda: [schedule.run_pending() or time.sleep(60)]).start()
 
-# Фоновий планувальник
-def run_scheduler():
-    while True:
-        schedule.run_pending()
-        time.sleep(60)
-
-threading.Thread(target=run_scheduler).start()
-
-# 👉 Встановлення webhook і запуск Flask
-if __name__ == "__main__":
-    bot.remove_webhook()
-    bot.set_webhook(url='https://yoddabot.onrender.com/' + TOKEN)
+# Старт Flask
+if __name__ == '__main__':
+    keep_alive()
     app.run(host="0.0.0.0", port=8080)
