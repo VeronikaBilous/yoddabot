@@ -197,3 +197,25 @@ def handle_text(message):
     elif state.startswith("adding_to:"):
         list_name = state.split(":")
 
+# --- Flask Webhook endpoint ---
+app = Flask(__name__)
+
+@app.route(f'/{TOKEN}', methods=['POST'])
+def webhook():
+    if request.headers.get('content-type') == 'application/json':
+        json_string = request.get_data().decode('utf-8')
+        update = telebot.types.Update.de_json(json_string)
+        bot.process_new_updates([update])
+        return 'OK', 200
+    else:
+        return 'Invalid content type', 403
+
+@app.route('/')
+def index():
+    return '⚡️ Webhook активний. YoddaBot на зв’язку!'
+
+# Запуск Flask-сервера для Render
+if __name__ == '__main__':
+    import os
+    port = int(os.environ.get('PORT', 8080))
+    app.run(host='0.0.0.0', port=port)
