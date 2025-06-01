@@ -1,10 +1,13 @@
-import telebot
 import os
 import json
 import random
 import threading
 import schedule
 import time
+
+from flask import Flask, request
+import telebot
+from telebot import types
 from dotenv import load_dotenv
 from keep_alive import keep_alive
 
@@ -22,7 +25,6 @@ if os.path.exists("tasks.json"):
     with open("tasks.json", "r", encoding="utf-8") as f:
         tasks = json.load(f)
 
-# Оновлення структури зі списку у словник
 for user_id in list(tasks.keys()):
     if isinstance(tasks[user_id], list):
         tasks[user_id] = {"Список": tasks[user_id]}
@@ -31,30 +33,29 @@ for user_id in list(tasks.keys()):
 def save_tasks():
     import shutil
     if os.path.exists("tasks.json"):
-        shutil.copy("tasks.json", "tasks_backup.json")  # створення бекапу
+        shutil.copy("tasks.json", "tasks_backup.json")
     with open("tasks.json", "w", encoding="utf-8") as f:
         json.dump(tasks, f, ensure_ascii=False, indent=4)
 
 # Клавіатура
-
 def power_keyboard():
-    markup = telebot.types.ReplyKeyboardMarkup(resize_keyboard=True)
-    markup.add(telebot.types.KeyboardButton("⚡ Power"))
+    markup = types.ReplyKeyboardMarkup(resize_keyboard=True)
+    markup.add(types.KeyboardButton("⚡ Power"))
     return markup
 
 def inline_menu():
-    markup = telebot.types.InlineKeyboardMarkup()
+    markup = types.InlineKeyboardMarkup()
     markup.row(
-        telebot.types.InlineKeyboardButton("📋 Списки", callback_data="list_lists"),
-        telebot.types.InlineKeyboardButton("➕ Додати", callback_data="choose_list_for_add")
+        types.InlineKeyboardButton("📋 Списки", callback_data="list_lists"),
+        types.InlineKeyboardButton("➕ Додати", callback_data="choose_list_for_add")
     )
     markup.row(
-        telebot.types.InlineKeyboardButton("✅ Завершити", callback_data="choose_list_for_finish"),
-        telebot.types.InlineKeyboardButton("🗑️ Видалити список", callback_data="delete_list")
+        types.InlineKeyboardButton("✅ Завершити", callback_data="choose_list_for_finish"),
+        types.InlineKeyboardButton("🗑️ Видалити список", callback_data="delete_list")
     )
     markup.row(
-        telebot.types.InlineKeyboardButton("✨ Натхнення", callback_data="inspiration"),
-        telebot.types.InlineKeyboardButton("ℹ️ Інструкція", callback_data="instruction")
+        types.InlineKeyboardButton("✨ Натхнення", callback_data="inspiration"),
+        types.InlineKeyboardButton("ℹ️ Інструкція", callback_data="instruction")
     )
     return markup
 
@@ -64,16 +65,11 @@ motivational_phrases = [
     "🌟 Великий шлях починається з малого кроку!",
     "🔥 Успіх — це справа рішучості.",
     "💡 Віра в себе творить дива!",
-    "🌱 Кожен день — нова можливість."
-    "🚀 Ти можеш більше, ніж здається!",
-    "🌟 Великий шлях починається з малого кроку!",
-    "🔥 Успіх — це справа рішучості.",
+    "🌱 Кожен день — нова можливість.",
     "🔥 Сьогодні твій день для перемог!",
-    "🌟 Сьогодні ідеальний день для великих кроків!",
     "🏆 Велика мрія — половина успіху!",
     "🛤️ Шлях у тисячу миль починається з одного кроку.",
     "💥 Найкращий час для дій — зараз!",
-    "🌱 Кожен день — нова можливість.",
     "🧠 Вчись, рости і світ відкриється перед тобою!"
 ]
 
@@ -109,11 +105,11 @@ def handle_inline_buttons(call):
                 bot.send_message(call.message.chat.id, msg, reply_markup=power_keyboard())
 
         elif call.data == "choose_list_for_add":
-            markup = telebot.types.InlineKeyboardMarkup()
+            markup = types.InlineKeyboardMarkup()
             for name in tasks[user_id]:
-                markup.add(telebot.types.InlineKeyboardButton(name, callback_data=f"add_to:{name}"))
+                markup.add(types.InlineKeyboardButton(name, callback_data=f"add_to:{name}"))
             if len(tasks[user_id]) < 10:
-                markup.add(telebot.types.InlineKeyboardButton("➕ Новий список", callback_data="create_new_list"))
+                markup.add(types.InlineKeyboardButton("➕ Новий список", callback_data="create_new_list"))
             bot.send_message(call.message.chat.id, "➕ Обери список або створи новий:", reply_markup=markup)
 
         elif call.data.startswith("add_to:"):
@@ -129,9 +125,9 @@ def handle_inline_buttons(call):
             if not tasks[user_id]:
                 bot.send_message(call.message.chat.id, "📭 Немає списків для завершення.", reply_markup=power_keyboard())
             else:
-                markup = telebot.types.InlineKeyboardMarkup()
+                markup = types.InlineKeyboardMarkup()
                 for name in tasks[user_id]:
-                    markup.add(telebot.types.InlineKeyboardButton(name, callback_data=f"finish_from:{name}"))
+                    markup.add(types.InlineKeyboardButton(name, callback_data=f"finish_from:{name}"))
                 bot.send_message(call.message.chat.id, "✅ Обери список для завершення:", reply_markup=markup)
 
         elif call.data.startswith("finish_from:"):
@@ -150,9 +146,9 @@ def handle_inline_buttons(call):
             if not tasks[user_id]:
                 bot.send_message(call.message.chat.id, "📭 Видаляти нічого. Немає списків.", reply_markup=power_keyboard())
             else:
-                markup = telebot.types.InlineKeyboardMarkup()
+                markup = types.InlineKeyboardMarkup()
                 for name in tasks[user_id]:
-                    markup.add(telebot.types.InlineKeyboardButton(f"🗑️ {name}", callback_data=f"delete:{name}"))
+                    markup.add(types.InlineKeyboardButton(f"🗑️ {name}", callback_data=f"delete:{name}"))
                 bot.send_message(call.message.chat.id, "🗑️ Обери список для видалення:", reply_markup=markup)
 
         elif call.data.startswith("delete:"):
@@ -232,14 +228,31 @@ def handle_text(message):
             bot.send_message(message.chat.id, "⚠️ Помилка у форматі номерів. Перевір.", reply_markup=power_keyboard())
         user_states.pop(user_id)
 
-# Автоматичне натхнення
-
+# Щоденне натхнення
 def morning_greeting():
     phrase = random.choice(morning_mantras)
     bot.send_message(CHAT_ID, f"💥 Доброго ранку, падаване! {phrase}", reply_markup=power_keyboard())
 
-keep_alive()
-schedule.every().day.at("10:00").do(morning_greeting)
-threading.Thread(target=lambda: [schedule.run_pending() or time.sleep(60)]).start()
-# bot.polling()
+# Flask Webhook
+app = Flask(__name__)
 
+@app.route(f"/{TOKEN}", methods=["POST"])
+def webhook():
+    if request.headers.get("content-type") == "application/json":
+        update = types.Update.de_json(request.data.decode("utf-8"))
+        bot.process_new_updates([update])
+        return "OK", 200
+    return "Bad request", 400
+
+@app.route("/", methods=["GET"])
+def index():
+    return "✅ YoddaBot Webhook активний!"
+
+# Запуск
+if __name__ == "__main__":
+    keep_alive()
+    bot.remove_webhook()
+    bot.set_webhook(url=f"https://yoddabot.onrender.com/{TOKEN}")
+    schedule.every().day.at("10:00").do(morning_greeting)
+    threading.Thread(target=lambda: [schedule.run_pending() or time.sleep(60)]).start()
+    app.run(host="0.0.0.0", port=8080)
