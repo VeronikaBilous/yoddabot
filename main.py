@@ -195,7 +195,7 @@ def handle_text(message):
         user_states.pop(user_id)
 
     elif state.startswith("adding_to:"):
-        list_name = state.split(":")
+        list_name = state.split(":")[1]
 
 # --- Flask Webhook endpoint ---
 app = Flask(__name__)
