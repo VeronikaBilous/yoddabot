@@ -195,7 +195,17 @@ def handle_text(message):
         user_states.pop(user_id)
 
     elif state.startswith("adding_to:"):
-        list_name = state.split(":")[1]
+    list_name = state.split(":")[1]
+    if "/" in text:
+        items = [item.strip() for item in text.split("/")]
+    else:
+        items = [text.strip()]
+        
+    tasks[user_id][list_name].extend(items)
+    save_tasks()
+    
+    bot.send_message(message.chat.id, f"✅ Додано до списку «{list_name}»: {', '.join(items)}", reply_markup=power_keyboard())
+
 
 # --- Flask Webhook endpoint ---
 app = Flask(__name__)
@@ -217,15 +227,6 @@ def index():
 # Запуск Flask-сервера для Render
 if __name__ == '__main__':
     import os
-    import requests
-
-    TOKEN = os.getenv('TOKEN')
-    if TOKEN:
-        webhook_url = f'https://yoddabot.onrender.com/{TOKEN}'
-        set_url = f'https://api.telegram.org/bot{TOKEN}/setWebhook'
-        res = requests.post(set_url, data={'url': webhook_url})
-        print('Webhook set response:', res.json())
-
     port = int(os.environ.get('PORT', 8080))
     app.run(host='0.0.0.0', port=port)
 
