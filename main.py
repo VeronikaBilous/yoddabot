@@ -195,7 +195,7 @@ def handle_text(message):
         user_states.pop(user_id)
 
     elif state.startswith("adding_to:"):
-    list_name = state.split(":")[1]
+        list_name = state.split(":")[1]
     if "/" in text:
         items = [item.strip() for item in text.split("/")]
     else:
