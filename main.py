@@ -194,32 +194,31 @@ def handle_text(message):
             bot.send_message(message.chat.id, f"📂 Створено список: {text}", reply_markup=power_keyboard())
         user_states.pop(user_id)
 
-   elif state.startswith("adding_to:"):
-    list_name = state.split(":")[1]
-    if "/" in text:
-        items = [item.strip() for item in text.split("/")]
-    else:
-        items = [text.strip()]
-    
-    tasks[user_id][list_name].extend(items)
-    save_tasks()
-    bot.send_message(message.chat.id, f"✅ Додано до списку «{list_name}»: {', '.join(items)}", reply_markup=power_keyboard())
-    user_states.pop(user_id)
+    elif state.startswith("adding_to:"):
+        list_name = state.split(":")[1]
+        if "/" in text:
+            items = [item.strip() for item in text.split("/")]
+        else:
+            items = [text.strip()]
 
-elif state.startswith("completing_from:"):
-    list_name = state.split(":")[1]
-    try:
-        indexes = [int(i) - 1 for i in text.replace(" ", "").replace("-", ",").split(",")]
-        indexes = sorted(set(indexes), reverse=True)
-        for i in indexes:
-            if 0 <= i < len(tasks[user_id][list_name]):
-                del tasks[user_id][list_name][i]
+        tasks[user_id][list_name].extend(items)
         save_tasks()
-        bot.send_message(message.chat.id, f"✅ Завдання завершено у списку {list_name}.", reply_markup=power_keyboard())
-    except Exception as e:
-        bot.send_message(message.chat.id, "❌ Помилка завершення. Спробуй ще раз.", reply_markup=power_keyboard())
-    user_states.pop(user_id)
+        bot.send_message(message.chat.id, f"✅ Додано до списку «{list_name}»: {', '.join(items)}", reply_markup=power_keyboard())
+        user_states.pop(user_id)
 
+    elif state.startswith("completing_from:"):
+        list_name = state.split(":")[1]
+        try:
+            indexes = [int(i) - 1 for i in text.replace(" ", "").replace("-", ",").split(",")]
+            indexes = sorted(set(indexes), reverse=True)
+            for i in indexes:
+                if 0 <= i < len(tasks[user_id][list_name]):
+                    del tasks[user_id][list_name][i]
+            save_tasks()
+            bot.send_message(message.chat.id, f"✅ Завдання завершено у списку {list_name}.", reply_markup=power_keyboard())
+        except Exception as e:
+            bot.send_message(message.chat.id, "❌ Помилка завершення. Спробуй ще раз.", reply_markup=power_keyboard())
+        user_states.pop(user_id)
 
 # --- Flask Webhook endpoint ---
 app = Flask(__name__)
@@ -238,8 +237,7 @@ def webhook():
 def index():
     return '⚡ Webhook активний. YoddaBot на зв’язку!'
 
-
-# --- Запуск Flask-сервера для Render ---
+# Запуск Flask-сервера для Render
 if __name__ == '__main__':
     import os
     port = int(os.environ.get('PORT', 8080))
