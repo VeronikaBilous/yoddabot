@@ -207,18 +207,18 @@ def handle_text(message):
         user_states.pop(user_id)
 
     elif state.startswith("completing_from:"):
-        list_name = state.split(":")[1]
-        try:
-            indexes = [int(i) - 1 for i in text.replace(" ", "").replace("-", ",").split(",")]
-            indexes = sorted(set(indexes), reverse=True)
-            for i in indexes:
-                if 0 <= i < len(tasks[user_id][list_name]):
-                    del tasks[user_id][list_name][i]
-            save_tasks()
-            bot.send_message(message.chat.id, f"✅ Завдання завершено у списку {list_name}.", reply_markup=power_keyboard())
-        except Exception as e:
-            bot.send_message(message.chat.id, "❌ Помилка завершення. Спробуй ще раз.", reply_markup=power_keyboard())
-        user_states.pop(user_id)
+    list_name = state.split(":")[1]
+    try:
+        indexes = [int(i) - 1 for i in text.replace(" ", "").replace("-", ",").split(",")]
+        indexes = sorted(set(indexes), reverse=True)
+        for i in indexes:
+            if 0 <= i < len(tasks[user_id][list_name]):
+                del tasks[user_id][list_name][i]
+        save_tasks()
+        bot.send_message(message.chat.id, f"✅ Завдання завершено у списку {list_name}.", reply_markup=power_keyboard())
+    except Exception as e:
+        bot.send_message(message.chat.id, "❌ Помилка завершення. Спробуй ще раз.", reply_markup=power_keyboard())
+    user_states.pop(user_id)
 
 # --- Flask Webhook endpoint ---
 app = Flask(__name__)
