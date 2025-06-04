@@ -8,6 +8,8 @@ import time
 from flask import Flask, request
 from dotenv import load_dotenv
 
+app = Flask(__name__)
+
 # Завантаження змінних середовища
 load_dotenv()
 TOKEN = os.getenv('TOKEN')
