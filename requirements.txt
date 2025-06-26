@@ -1,4 +1,5 @@
-pyTelegramBotAPI
+telebot
 flask
 python-dotenv
 schedule
+requests
