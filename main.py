@@ -99,10 +99,14 @@ def handle_inline_buttons(call):
             if not tasks[user_id]:
                 bot.send_message(call.message.chat.id, "📭 Списків у тебе ще нема.", reply_markup=power_keyboard())
             else:
-                msg = "📋 Твої списки:\n"
+                msg = "📋 Твої списки:
+"
                 for list_name, items in tasks[user_id].items():
                     sorted_items = sorted(items, key=lambda x: 0 if x.startswith("!") else 1)
-                    msg += f"\n🔹 {list_name}:\n" + "\n".join(f"- {item}" for item in sorted_items)
+                    msg += f"
+🔹 {list_name}:
+" + "
+".join(f"- {item}" for item in sorted_items)
                 bot.send_message(call.message.chat.id, msg, reply_markup=power_keyboard())
 
         elif call.data == "choose_list_for_add":
@@ -136,9 +140,12 @@ def handle_inline_buttons(call):
             user_states[user_id] = f"finishing_from:{list_name}"
             tasks_list = tasks[user_id][list_name]
             if tasks_list:
-                msg = f"📋 Завдання у списку {list_name}:\n"
-                msg += "\n".join(f"{i+1}. {task}" for i, task in enumerate(tasks_list))
-                msg += "\nВведи номери через кому або дефіс (1,2 або 1-3):"
+                msg = f"📋 Завдання у списку {list_name}:
+"
+                msg += "
+".join(f"{i+1}. {task}" for i, task in enumerate(tasks_list))
+                msg += "
+Введи номери через кому або дефіс (1,2 або 1-3):"
                 bot.send_message(call.message.chat.id, msg, reply_markup=power_keyboard())
             else:
                 bot.send_message(call.message.chat.id, "📭 Список порожній.", reply_markup=power_keyboard())
@@ -166,7 +173,13 @@ def handle_inline_buttons(call):
             bot.send_message(call.message.chat.id, phrase, reply_markup=power_keyboard())
 
         elif call.data == "instruction":
-            bot.send_message(call.message.chat.id, "ℹ️ Інструкція:\n⚡ Power — головна кнопка.\n➕ Додай через / кілька завдань.\n✅ Завершуй за номерами.\n📋 Використовуй ! для важливих.\n🗑️ Видаляй зайві списки.\nМаєш максимум 10 списків!", reply_markup=power_keyboard())
+            bot.send_message(call.message.chat.id, "ℹ️ Інструкція:
+⚡ Power — головна кнопка.
+➕ Додай через / кілька завдань.
+✅ Завершуй за номерами.
+📋 Використовуй ! для важливих.
+🗑️ Видаляй зайві списки.
+Маєш максимум 10 списків!", reply_markup=power_keyboard())
 
         bot.answer_callback_query(call.id)
 
@@ -222,7 +235,9 @@ def handle_text(message):
                     completed.append(tasks[user_id][list_name].pop(i - 1))
             save_tasks()
             if completed:
-                bot.send_message(message.chat.id, "✅ Завершено:\n" + "\n".join(f"- {x}" for x in completed), reply_markup=power_keyboard())
+                bot.send_message(message.chat.id, "✅ Завершено:
+" + "
+".join(f"- {x}" for x in completed), reply_markup=power_keyboard())
             else:
                 bot.send_message(message.chat.id, "⚠️ Нічого не завершено.", reply_markup=power_keyboard())
         except:
