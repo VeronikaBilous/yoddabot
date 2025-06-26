@@ -363,7 +363,7 @@ def webhook():
 
 @app.route('/')
 def index():
-    return '⚡ Webhook активний. YoddaBot на зв'язку!'
+    return '⚡ Webhook активний. YoddaBot на зв\'язку!'
 
 # Запуск для Render
 if __name__ == '__main__':
@@ -372,5 +372,11 @@ if __name__ == '__main__':
     
     port = int(os.environ.get('PORT', 8080))
     schedule.every().day.at("10:00").do(morning_greeting)
-    threading.Thread(target=lambda: [schedule.run_pending() or time.sleep(60) for _ in iter(int, 1)], daemon=True).start()
+    
+    def run_schedule():
+        while True:
+            schedule.run_pending()
+            time.sleep(60)
+    
+    threading.Thread(target=run_schedule, daemon=True).start()
     app.run(host='0.0.0.0', port=port)
