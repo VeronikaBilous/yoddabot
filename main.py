@@ -30,59 +30,94 @@ user_states = {}
 # GitHub API функції
 def get_file_from_github(filename):
     """Завантажує файл з GitHub репозиторію"""
+    print(f"🔍 Спроба завантажити {filename} з GitHub...")
+    
+    # Перевіряємо чи налаштовані змінні
+    if not all([GITHUB_TOKEN, GITHUB_USERNAME, GITHUB_REPO]):
+        print("❌ GitHub параметри не налаштовані!")
+        print(f"TOKEN: {'✅' if GITHUB_TOKEN else '❌'}")
+        print(f"USERNAME: {'✅' if GITHUB_USERNAME else '❌'}")
+        print(f"REPO: {'✅' if GITHUB_REPO else '❌'}")
+        return {}, None
+    
     url = f"https://api.github.com/repos/{GITHUB_USERNAME}/{GITHUB_REPO}/contents/{filename}"
     headers = {
         'Authorization': f'token {GITHUB_TOKEN}',
-        'Accept': 'application/vnd.github.v3+json'
+        'Accept': 'application/vnd.github.v3+json',
+        'User-Agent': 'YoddaBot/1.0'
     }
+    
+    print(f"📡 URL: {url}")
+    print(f"🔑 Використовуємо токен: {GITHUB_TOKEN[:10]}...")
     
     try:
         response = requests.get(url, headers=headers)
+        print(f"📊 Статус відповіді: {response.status_code}")
+        
         if response.status_code == 200:
             content = response.json()
             # Декодуємо base64 контент
             file_content = base64.b64decode(content['content']).decode('utf-8')
+            print(f"✅ Файл {filename} успішно завантажено з GitHub")
             return json.loads(file_content), content['sha']
         elif response.status_code == 404:
-            # Файл не існує, повертаємо порожній словник
+            print(f"📂 Файл {filename} не існує на GitHub")
+            return {}, None
+        elif response.status_code == 401:
+            print("❌ Помилка авторизації! Перевірте GitHub токен")
+            print(f"Відповідь: {response.text}")
+            return {}, None
+        elif response.status_code == 403:
+            print("❌ Доступ заборонено! Перевірте права токена")
+            print(f"Відповідь: {response.text}")
             return {}, None
         else:
-            print(f"Помилка завантаження з GitHub: {response.status_code}")
+            print(f"❌ Помилка завантаження з GitHub: {response.status_code}")
+            print(f"Відповідь: {response.text}")
             return {}, None
     except Exception as e:
-        print(f"Помилка при роботі з GitHub API: {e}")
+        print(f"❌ Виняток при роботі з GitHub API: {e}")
         return {}, None
 
 def save_file_to_github(filename, content, sha=None):
     """Зберігає файл у GitHub репозиторій"""
+    print(f"💾 Спроба зберегти {filename} в GitHub...")
+    
     url = f"https://api.github.com/repos/{GITHUB_USERNAME}/{GITHUB_REPO}/contents/{filename}"
     headers = {
         'Authorization': f'token {GITHUB_TOKEN}',
-        'Accept': 'application/vnd.github.v3+json'
+        'Accept': 'application/vnd.github.v3+json',
+        'User-Agent': 'YoddaBot/1.0'
     }
     
     # Кодуємо контент у base64
     content_encoded = base64.b64encode(json.dumps(content, ensure_ascii=False, indent=4).encode('utf-8')).decode('utf-8')
     
     data = {
-        'message': f'Update {filename}',
+        'message': f'Update {filename} - {time.strftime("%Y-%m-%d %H:%M:%S")}',
         'content': content_encoded
     }
     
     # Якщо файл існує, потрібно вказати SHA
     if sha:
         data['sha'] = sha
+        print(f"🔄 Оновлюємо існуючий файл (SHA: {sha[:10]}...)")
+    else:
+        print("📝 Створюємо новий файл")
     
     try:
         response = requests.put(url, headers=headers, json=data)
+        print(f"📊 Статус відповіді: {response.status_code}")
+        
         if response.status_code in [200, 201]:
             print(f"✅ Файл {filename} успішно збережено в GitHub")
             return True
         else:
-            print(f"❌ Помилка збереження в GitHub: {response.status_code} - {response.text}")
+            print(f"❌ Помилка збереження в GitHub: {response.status_code}")
+            print(f"Відповідь: {response.text}")
             return False
     except Exception as e:
-        print(f"❌ Помилка при збереженні в GitHub: {e}")
+        print(f"❌ Виняток при збереженні в GitHub: {e}")
         return False
 
 # Завантаження даних з GitHub при запуску
@@ -200,16 +235,31 @@ def handle_inline_buttons(call):
 
     try:
         if call.data == "sync_github":
+            print("🔄 Розпочато синхронізацію з GitHub...")
             bot.send_message(call.message.chat.id, "🔄 Синхронізація з GitHub...")
             
             # Завантажуємо останні дані з GitHub
-            github_tasks, _ = get_file_from_github("tasks.json")
+            github_tasks, current_sha = get_file_from_github("tasks.json")
+            
             if github_tasks:
-                tasks.update(github_tasks)
+                print(f"📥 Отримано дані з GitHub для {len(github_tasks)} користувачів")
+                
+                # Об'єднуємо дані (GitHub має пріоритет)
+                for user_id_gh, user_data in github_tasks.items():
+                    if user_id_gh in tasks:
+                        # Об'єднуємо списки користувача
+                        for list_name, list_items in user_data.items():
+                            tasks[user_id_gh][list_name] = list_items
+                    else:
+                        tasks[user_id_gh] = user_data
+                
+                # Зберігаємо локально
                 save_tasks()
-                bot.send_message(call.message.chat.id, "✅ Синхронізація завершена!", reply_markup=power_keyboard())
+                bot.send_message(call.message.chat.id, "✅ Синхронізація завершена успішно!", reply_markup=power_keyboard())
+                print("✅ Синхронізація завершена успішно")
             else:
-                bot.send_message(call.message.chat.id, "⚠️ Не вдалося синхронізувати з GitHub", reply_markup=power_keyboard())
+                print("❌ Не вдалося отримати дані з GitHub")
+                bot.send_message(call.message.chat.id, "⚠️ Не вдалося синхронізувати з GitHub. Перевірте логи.", reply_markup=power_keyboard())
 
         elif call.data == "list_lists":
             if not tasks[user_id]:
